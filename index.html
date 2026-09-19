@@ -1,0 +1,789 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+
+<title>Movement Cue Engine V1</title>
+
+<style>
+*{
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+}
+
+html,body{
+  margin:0;
+  min-height:100%;
+  background:#08111f;
+  color:#f4f7fb;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+
+body{
+  display:flex;
+  justify-content:center;
+}
+
+.app{
+  width:min(760px,100%);
+  min-height:100vh;
+  padding:18px;
+}
+
+header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  margin-bottom:14px;
+}
+
+h1{
+  font-size:20px;
+  margin:0;
+}
+
+.status{
+  font-size:12px;
+  color:#9eacbd;
+}
+
+.arena{
+  position:relative;
+  min-height:390px;
+  border:1px solid #24354b;
+  border-radius:24px;
+  background:
+    radial-gradient(circle at 50% 40%,#172b45 0,#0c192a 45%,#08111f 75%);
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+}
+
+.cue-label{
+  position:absolute;
+  top:22px;
+  font-size:14px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:#9eacbd;
+}
+
+.cue{
+  font-size:48px;
+  font-weight:800;
+  text-align:center;
+  line-height:1.05;
+  min-height:100px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+
+.detail{
+  font-size:15px;
+  color:#aebdce;
+  text-align:center;
+  min-height:24px;
+  padding:0 20px;
+}
+
+.figure{
+  position:relative;
+  width:150px;
+  height:150px;
+  margin-top:8px;
+}
+
+.head{
+  position:absolute;
+  width:30px;
+  height:30px;
+  border:4px solid #f4f7fb;
+  border-radius:50%;
+  left:60px;
+  top:0;
+}
+
+.body{
+  position:absolute;
+  width:6px;
+  height:72px;
+  background:#f4f7fb;
+  border-radius:6px;
+  left:72px;
+  top:31px;
+}
+
+.arm,
+.leg{
+  position:absolute;
+  height:6px;
+  background:#f4f7fb;
+  border-radius:6px;
+  transform-origin:left center;
+}
+
+.arm{
+  width:58px;
+  left:74px;
+  top:48px;
+}
+
+.arm.left{
+  transform:rotate(145deg);
+}
+
+.arm.right{
+  transform:rotate(35deg);
+}
+
+.leg{
+  width:70px;
+  left:73px;
+  top:98px;
+}
+
+.leg.left{
+  transform:rotate(115deg);
+}
+
+.leg.right{
+  transform:rotate(65deg);
+}
+
+.figure.spin{
+  animation:spin .65s ease-in-out;
+}
+
+.figure.jump{
+  animation:jump .65s ease-in-out;
+}
+
+.figure.left{
+  animation:shiftLeft .55s ease-in-out;
+}
+
+.figure.right{
+  animation:shiftRight .55s ease-in-out;
+}
+
+.figure.down{
+  animation:crouch .55s ease-in-out;
+}
+
+@keyframes spin{
+  50%{transform:rotate(180deg) scale(1.08)}
+}
+
+@keyframes jump{
+  50%{transform:translateY(-38px) scale(1.05)}
+}
+
+@keyframes shiftLeft{
+  50%{transform:translateX(-45px)}
+}
+
+@keyframes shiftRight{
+  50%{transform:translateX(45px)}
+}
+
+@keyframes crouch{
+  50%{transform:scaleY(.72) translateY(25px)}
+}
+
+.controls{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:14px;
+}
+
+button{
+  min-height:52px;
+  border:1px solid #2c4059;
+  border-radius:14px;
+  background:#122239;
+  color:#f4f7fb;
+  font:inherit;
+  font-weight:700;
+  cursor:pointer;
+}
+
+button:active{
+  transform:scale(.98);
+}
+
+button.primary{
+  background:#e9eef5;
+  color:#07101c;
+}
+
+button:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+}
+
+.settings{
+  margin-top:14px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.panel{
+  padding:14px;
+  border:1px solid #24354b;
+  border-radius:16px;
+  background:#0d1929;
+}
+
+.panel label{
+  display:block;
+  font-size:12px;
+  color:#9eacbd;
+  margin-bottom:6px;
+}
+
+select{
+  width:100%;
+  min-height:42px;
+  border-radius:10px;
+  border:1px solid #2c4059;
+  background:#101f33;
+  color:#fff;
+  padding:8px;
+  font-size:15px;
+}
+
+.stats{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+  margin-top:14px;
+}
+
+.stat{
+  background:#0d1929;
+  border:1px solid #24354b;
+  border-radius:14px;
+  padding:12px;
+  text-align:center;
+}
+
+.stat small{
+  display:block;
+  color:#8999ab;
+  font-size:11px;
+}
+
+.stat strong{
+  display:block;
+  font-size:22px;
+  margin-top:3px;
+}
+
+.sequence{
+  margin-top:14px;
+  padding:14px;
+  border:1px solid #24354b;
+  border-radius:16px;
+  background:#0d1929;
+}
+
+.sequence-title{
+  color:#9eacbd;
+  font-size:12px;
+  text-transform:uppercase;
+  letter-spacing:.1em;
+  margin-bottom:10px;
+}
+
+.sequence-list{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+}
+
+.token{
+  padding:7px 9px;
+  border-radius:9px;
+  background:#17283e;
+  font-size:13px;
+}
+
+.token.active{
+  outline:2px solid #fff;
+}
+
+@media(max-width:480px){
+  .arena{
+    min-height:350px;
+  }
+
+  .cue{
+    font-size:38px;
+  }
+
+  .settings{
+    grid-template-columns:1fr;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<main class="app">
+
+<header>
+  <div>
+    <h1>Movement Cue Engine</h1>
+    <div class="status" id="status">Ready</div>
+  </div>
+</header>
+
+<section class="arena">
+
+  <div class="cue-label">NEXT MOVEMENT</div>
+
+  <div class="cue" id="cue">READY</div>
+
+  <div class="detail" id="detail">
+    Generate a sequence, then follow the visual cues.
+  </div>
+
+  <div class="figure" id="figure" aria-hidden="true">
+    <div class="head"></div>
+    <div class="body"></div>
+    <div class="arm left"></div>
+    <div class="arm right"></div>
+    <div class="leg left"></div>
+    <div class="leg right"></div>
+  </div>
+
+</section>
+
+<div class="controls">
+  <button class="primary" id="start">START</button>
+  <button id="next">NEXT CUE</button>
+</div>
+
+<div class="settings">
+
+  <div class="panel">
+    <label for="style">Movement family</label>
+    <select id="style">
+      <option value="mixed">Mixed</option>
+      <option value="martial">Martial Arts</option>
+      <option value="dance">Dance</option>
+      <option value="gym">Gymnastics</option>
+      <option value="athletic">Athletic</option>
+    </select>
+  </div>
+
+  <div class="panel">
+    <label for="difficulty">Difficulty</label>
+    <select id="difficulty">
+      <option value="1">Level 1 — Foundation</option>
+      <option value="2">Level 2 — Combination</option>
+      <option value="3">Level 3 — Complex</option>
+    </select>
+  </div>
+
+</div>
+
+<div class="stats">
+  <div class="stat">
+    <small>SCORE</small>
+    <strong id="score">0</strong>
+  </div>
+
+  <div class="stat">
+    <small>STREAK</small>
+    <strong id="streak">0</strong>
+  </div>
+
+  <div class="stat">
+    <small>ROUND</small>
+    <strong id="round">0</strong>
+  </div>
+</div>
+
+<section class="sequence">
+  <div class="sequence-title">Current sequence</div>
+  <div class="sequence-list" id="sequence"></div>
+</section>
+
+</main>
+
+<script>
+(() => {
+
+  const MOVES = {
+
+    step: {
+      name: "STEP",
+      detail: "Take one controlled step.",
+      animation: "right",
+      families: ["mixed","martial","dance","athletic"]
+    },
+
+    left: {
+      name: "LEFT",
+      detail: "Shift your body to the left.",
+      animation: "left",
+      families: ["mixed","martial","dance","athletic"]
+    },
+
+    right: {
+      name: "RIGHT",
+      detail: "Shift your body to the right.",
+      animation: "right",
+      families: ["mixed","martial","dance","athletic"]
+    },
+
+    crouch: {
+      name: "LOW",
+      detail: "Lower your center of gravity.",
+      animation: "down",
+      families: ["mixed","martial","dance","gym","athletic"]
+    },
+
+    pivot: {
+      name: "PIVOT",
+      detail: "Rotate around your supporting foot.",
+      animation: "spin",
+      families: ["mixed","martial","dance","athletic"]
+    },
+
+    turn: {
+      name: "TURN 180°",
+      detail: "Turn and reorient your body.",
+      animation: "spin",
+      families: ["mixed","martial","dance","gym"]
+    },
+
+    jump: {
+      name: "JUMP",
+      detail: "Jump and land under control.",
+      animation: "jump",
+      families: ["mixed","dance","gym","athletic"]
+    },
+
+    knee: {
+      name: "KNEE",
+      detail: "Drive one knee upward.",
+      animation: "jump",
+      families: ["mixed","martial","athletic"]
+    },
+
+    guard: {
+      name: "GUARD",
+      detail: "Bring your hands into a balanced position.",
+      animation: "none",
+      families: ["mixed","martial"]
+    },
+
+    reach: {
+      name: "REACH",
+      detail: "Extend through the movement.",
+      animation: "right",
+      families: ["mixed","dance","gym"]
+    },
+
+    pose: {
+      name: "POSE",
+      detail: "Freeze and control your balance.",
+      animation: "none",
+      families: ["mixed","dance","gym"]
+    },
+
+    roll: {
+      name: "ROLL",
+      detail: "Practice the rolling movement pattern.",
+      animation: "spin",
+      families: ["mixed","martial","gym","athletic"]
+    },
+
+    balance: {
+      name: "BALANCE",
+      detail: "Hold your position briefly.",
+      animation: "none",
+      families: ["mixed","dance","gym","athletic"]
+    },
+
+    kick: {
+      name: "KICK",
+      detail: "Practice the kicking motion with control.",
+      animation: "right",
+      families: ["mixed","martial"]
+    },
+
+    cross: {
+      name: "CROSS STEP",
+      detail: "Cross one foot over the other.",
+      animation: "right",
+      families: ["mixed","dance","martial"]
+    },
+
+    isolate: {
+      name: "ISOLATE",
+      detail: "Move one body region while keeping the rest controlled.",
+      animation: "none",
+      families: ["mixed","dance"]
+    }
+
+  };
+
+  const LEVELS = {
+    1: 3,
+    2: 5,
+    3: 7
+  };
+
+  const cueEl = document.getElementById("cue");
+  const detailEl = document.getElementById("detail");
+  const figureEl = document.getElementById("figure");
+  const statusEl = document.getElementById("status");
+  const sequenceEl = document.getElementById("sequence");
+
+  const scoreEl = document.getElementById("score");
+  const streakEl = document.getElementById("streak");
+  const roundEl = document.getElementById("round");
+
+  const startBtn = document.getElementById("start");
+  const nextBtn = document.getElementById("next");
+
+  const styleSelect = document.getElementById("style");
+  const difficultySelect = document.getElementById("difficulty");
+
+  let sequence = [];
+  let index = -1;
+  let running = false;
+  let timer = null;
+
+  let score = 0;
+  let streak = 0;
+  let round = 0;
+
+  function availableMoves(){
+
+    const family = styleSelect.value;
+
+    return Object.keys(MOVES).filter(key =>
+      MOVES[key].families.includes(family)
+    );
+  }
+
+  function randomMove(previous){
+
+    const pool = availableMoves();
+
+    let choices = pool.filter(key => key !== previous);
+
+    if (!choices.length){
+      choices = pool;
+    }
+
+    return choices[Math.floor(Math.random() * choices.length)];
+  }
+
+  function generateSequence(){
+
+    const length = LEVELS[difficultySelect.value];
+
+    sequence = [];
+
+    let previous = null;
+
+    for(let i = 0; i < length; i++){
+
+      const move = randomMove(previous);
+
+      sequence.push(move);
+      previous = move;
+    }
+
+    renderSequence();
+
+    index = -1;
+  }
+
+  function renderSequence(){
+
+    sequenceEl.innerHTML = "";
+
+    sequence.forEach((key,i) => {
+
+      const token = document.createElement("span");
+
+      token.className = "token";
+      token.textContent = MOVES[key].name;
+      token.dataset.index = i;
+
+      sequenceEl.appendChild(token);
+
+    });
+  }
+
+  function highlightSequence(){
+
+    [...sequenceEl.children].forEach((el,i) => {
+
+      el.classList.toggle(
+        "active",
+        i === index
+      );
+
+    });
+  }
+
+  function animateFigure(animation){
+
+    figureEl.className = "figure";
+
+    if(animation === "none"){
+      return;
+    }
+
+    void figureEl.offsetWidth;
+
+    figureEl.classList.add(animation);
+  }
+
+  function showCue(){
+
+    if(index < 0 || index >= sequence.length){
+      return;
+    }
+
+    const key = sequence[index];
+    const move = MOVES[key];
+
+    cueEl.textContent = move.name;
+    detailEl.textContent = move.detail;
+
+    animateFigure(move.animation);
+    highlightSequence();
+
+    statusEl.textContent =
+      `Cue ${index + 1} of ${sequence.length}`;
+
+    roundEl.textContent = round;
+  }
+
+  function nextCue(){
+
+    if(!sequence.length){
+      generateSequence();
+    }
+
+    index++;
+
+    if(index >= sequence.length){
+
+      completeRound();
+      return;
+    }
+
+    showCue();
+  }
+
+  function completeRound(){
+
+    running = false;
+    clearTimeout(timer);
+
+    score += sequence.length * 10;
+    streak++;
+
+    scoreEl.textContent = score;
+    streakEl.textContent = streak;
+
+    cueEl.textContent = "COMPLETE";
+    detailEl.textContent =
+      "Sequence finished. Generate another sequence.";
+
+    statusEl.textContent = "Round complete";
+
+    round++;
+
+    startBtn.textContent = "START NEXT";
+  }
+
+  function start(){
+
+    clearTimeout(timer);
+
+    generateSequence();
+
+    round++;
+
+    scoreEl.textContent = score;
+    streakEl.textContent = streak;
+    roundEl.textContent = round;
+
+    running = true;
+
+    startBtn.textContent = "RESTART";
+
+    nextCue();
+  }
+
+  startBtn.addEventListener("click", () => {
+
+    if(running){
+      start();
+    }else{
+      start();
+    }
+
+  });
+
+  nextBtn.addEventListener("click", () => {
+
+    if(!running){
+      running = true;
+      round++;
+      generateSequence();
+    }
+
+    nextCue();
+
+  });
+
+  styleSelect.addEventListener("change", () => {
+
+    if(!running){
+      generateSequence();
+      cueEl.textContent = "READY";
+      detailEl.textContent =
+        "Movement family changed.";
+    }
+
+  });
+
+  difficultySelect.addEventListener("change", () => {
+
+    if(!running){
+      generateSequence();
+      cueEl.textContent = "READY";
+      detailEl.textContent =
+        "Difficulty changed.";
+    }
+
+  });
+
+  generateSequence();
+
+})();
+</script>
+
+</body>
+</html>
